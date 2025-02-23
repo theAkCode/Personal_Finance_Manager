@@ -12,7 +12,6 @@ import { loginAPI } from "../../utils/ApiRequest";
 
 const Login = () => {
   const navigate = useNavigate();
-
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -43,7 +42,6 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const { email, password } = values;
 
     setLoading(true);
@@ -65,70 +63,30 @@ const Login = () => {
   };
 
   const particlesInit = useCallback(async (engine) => {
-    // console.log(engine);
     await loadFull(engine);
   }, []);
 
   const particlesLoaded = useCallback(async (container) => {
-    // await console.log(container);
   }, []);
 
   return (
-    <div style={{ position: "relative", overflow: "hidden" }}>
+    <div style={{ position: "relative", overflow: "hidden", height: "100vh" }}>
+      {/* Background particles */}
       <Particles
         id="tsparticles"
         init={particlesInit}
         loaded={particlesLoaded}
         options={{
-          background: {
-            color: {
-              value: "#000",
-            },
-          },
+          background: { color: { value: "#000" } },
           fpsLimit: 60,
           particles: {
-            number: {
-              value: 200,
-              density: {
-                enable: true,
-                value_area: 800,
-              },
-            },
-            color: {
-              value: "#ffcc00",
-            },
-            shape: {
-              type: "circle",
-            },
-            opacity: {
-              value: 0.5,
-              random: true,
-            },
-            size: {
-              value: 3,
-              random: { enable: true, minimumValue: 1 },
-            },
-            links: {
-              enable: false,
-            },
-            move: {
-              enable: true,
-              speed: 2,
-            },
-            life: {
-              duration: {
-                sync: false,
-                value: 3,
-              },
-              count: 0,
-              delay: {
-                random: {
-                  enable: true,
-                  minimumValue: 0.5,
-                },
-                value: 1,
-              },
-            },
+            number: { value: 200, density: { enable: true, value_area: 800 } },
+            color: { value: "#ffcc00" },
+            shape: { type: "circle" },
+            opacity: { value: 0.5, random: true },
+            size: { value: 3, random: { enable: true, minimumValue: 1 } },
+            links: { enable: false },
+            move: { enable: true, speed: 2 },
           },
           detectRetina: true,
         }}
@@ -141,21 +99,31 @@ const Login = () => {
           bottom: 0,
         }}
       />
+
+      {/* Form Container */}
       <Container
         className="mt-5"
-        style={{ position: "relative", zIndex: "2 !important" }}
+        style={{
+          position: "relative",
+          zIndex: 2,
+          maxWidth: "500px",
+          backgroundColor: "rgba(0, 0, 0, 0.7)", // Add a subtle dark background to the form
+          borderRadius: "10px",
+          padding: "30px",
+        }}
       >
         <Row>
-          <Col md={{ span: 6, offset: 3 }}>
-            <h1 className="text-center mt-5">
-              <AccountBalanceWalletIcon
-                sx={{ fontSize: 40, color: "white" }}
-                className="text-center"
-              />
-            </h1>
-            <h2 className="text-white text-center ">Login</h2>
-            <Form>
-              <Form.Group controlId="formBasicEmail" className="mt-3">
+          <Col>
+            <div className="text-center">
+              <h1 style={{ color: "#ffcc00" }}>
+                <AccountBalanceWalletIcon sx={{ fontSize: 50 }} />
+              </h1>
+              <h2 className="text-white mb-4">Login</h2>
+            </div>
+
+            {/* Form */}
+            <Form onSubmit={handleSubmit}>
+              <Form.Group controlId="formBasicEmail" className="mb-3">
                 <Form.Label className="text-white">Email address</Form.Label>
                 <Form.Control
                   type="email"
@@ -163,10 +131,16 @@ const Login = () => {
                   name="email"
                   onChange={handleChange}
                   value={values.email}
+                  required
+                  style={{
+                    backgroundColor: "#333",
+                    color: "white",
+                    border: "1px solid #444",
+                  }}
                 />
               </Form.Group>
 
-              <Form.Group controlId="formBasicPassword" className="mt-3">
+              <Form.Group controlId="formBasicPassword" className="mb-3">
                 <Form.Label className="text-white">Password</Form.Label>
                 <Form.Control
                   type="password"
@@ -174,34 +148,33 @@ const Login = () => {
                   placeholder="Password"
                   onChange={handleChange}
                   value={values.password}
+                  required
+                  style={{
+                    backgroundColor: "#333",
+                    color: "white",
+                    border: "1px solid #444",
+                  }}
                 />
               </Form.Group>
-              <div
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexDirection: "column",
-                }}
-                className="mt-4"
-              >
-                <Link to="/forgotPassword" className="text-white lnk">
+
+              {/* Buttons and Links */}
+              <div className="d-flex justify-content-center flex-column align-items-center">
+                <Link to="/forgotPassword" className="text-white mb-3">
                   Forgot Password?
                 </Link>
 
                 <Button
                   type="submit"
-                  className=" text-center mt-3 btnStyle"
-                  onClick={!loading ? handleSubmit : null}
+                  className="btn btn-warning w-100"
                   disabled={loading}
+                  style={{ padding: "12px 0", fontSize: "16px", marginBottom: "15px" }}
                 >
-                  {loading ? "Signin…" : "Login"}
+                  {loading ? "Signing in..." : "Login"}
                 </Button>
 
-                <p className="mt-3" style={{ color: "#9d9494" }}>
-                  Don't Have an Account?{" "}
-                  <Link to="/register" className="text-white lnk">
+                <p className="text-white">
+                  Don't have an account?{" "}
+                  <Link to="/register" className="text-warning">
                     Register
                   </Link>
                 </p>
@@ -209,8 +182,10 @@ const Login = () => {
             </Form>
           </Col>
         </Row>
-        <ToastContainer />
       </Container>
+
+      {/* Toast Notifications */}
+      <ToastContainer />
     </div>
   );
 };

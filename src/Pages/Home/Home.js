@@ -49,24 +49,24 @@ const Home = () => {
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
-  useEffect(() => {
-    const avatarFunc = async () => {
-      if (localStorage.getItem("user")) {
-        const user = JSON.parse(localStorage.getItem("user"));
-        console.log(user);
+  // useEffect(() => {
+  //   const avatarFunc = async () => {
+  //     if (localStorage.getItem("user")) {
+  //       const user = JSON.parse(localStorage.getItem("user"));
+  //       console.log(user);
 
-        if (user.isAvatarImageSet === false || user.avatarImage === "") {
-          navigate("/setAvatar");
-        }
-        setcUser(user);
-        setRefresh(true);
-      } else {
-        navigate("/login");
-      }
-    };
+  //       if (user.isAvatarImageSet === false || user.avatarImage === "") {
+  //         navigate("/setAvatar");
+  //       }
+  //       setcUser(user);
+  //       setRefresh(true);
+  //     } else {
+  //       navigate("/login");
+  //     }
+  //   };
 
-    avatarFunc();
-  }, [navigate]);
+  //   avatarFunc();
+  // }, [navigate]);
 
   const [values, setValues] = useState({
     title: "",

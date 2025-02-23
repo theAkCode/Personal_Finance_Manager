@@ -1,41 +1,23 @@
-// SignupPage.js
+// RegisterPage.js
 import { useCallback, useEffect, useState } from "react";
-import { Container, Row, Col, Form, Button } from 'react-bootstrap';
-import "./auth.css";
+import { Container, Row, Col, Form, Button } from "react-bootstrap";
 import Particles from "react-tsparticles";
 import { loadFull } from "tsparticles";
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { Link, useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { registerAPI } from "../../utils/ApiRequest";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
+import { registerAPI } from "../../utils/ApiRequest";
 
 const Register = () => {
-
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if(localStorage.getItem('user')){
-      navigate('/');
-    }
-  }, [navigate]);
-
-  const particlesInit = useCallback(async (engine) => {
-    // console.log(engine);
-    await loadFull(engine);
-  }, []);
-
-  const particlesLoaded = useCallback(async (container) => {
-    // await console.log(container);
-  }, []);
+  const [loading, setLoading] = useState(false);
 
   const [values, setValues] = useState({
-    name : "",
-    email : "",
-    password : "",
-
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const toastOptions = {
@@ -47,100 +29,65 @@ const Register = () => {
     draggable: true,
     progress: undefined,
     theme: "dark",
-  }
+  };
 
   const handleChange = (e) => {
-    setValues({...values , [e.target.name]: e.target.value});
-  }
+    setValues({ ...values, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const { email, password, confirmPassword } = values;
 
-      const {name, email, password} = values;
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match!", toastOptions);
+      return;
+    }
 
+    setLoading(true);
+
+    const { data } = await axios.post(registerAPI, { email, password });
+
+    if (data.success === true) {
+      navigate("/login");
+      toast.success(data.message, toastOptions);
       setLoading(false);
-     
-      const {data} = await axios.post(registerAPI, {
-        name,
-        email,
-        password
-      });
+    } else {
+      toast.error(data.message, toastOptions);
+      setLoading(false);
+    }
+  };
 
-      if(data.success === true){
-        delete data.user.password;
-        localStorage.setItem("user", JSON.stringify(data.user));
-        toast.success(data.message, toastOptions);
-        setLoading(true);
-        navigate("/");
-      }
-      else{
-        toast.error(data.message, toastOptions);
-        setLoading(false);
-      }
-    };
+  const particlesInit = useCallback(async (engine) => {
+    await loadFull(engine);
+  }, []);
+
+  const particlesLoaded = useCallback(async (container) => {
+  }, []);
 
   return (
-    <>
-    <div style={{ position: 'relative', overflow: 'hidden' }}>
+    <div style={{ position: "relative", overflow: "hidden", height: "100vh" }}>
+      {/* Background particles */}
       <Particles
         id="tsparticles"
         init={particlesInit}
         loaded={particlesLoaded}
         options={{
-          background: {
-            color: {
-              value: '#000',
-            },
-          },
+          background: { color: { value: "#000" } },
           fpsLimit: 60,
           particles: {
-            number: {
-              value: 200,
-              density: {
-                enable: true,
-                value_area: 800,
-              },
-            },
-            color: {
-              value: '#ffcc00',
-            },
-            shape: {
-              type: 'circle',
-            },
-            opacity: {
-              value: 0.5,
-              random: true,
-            },
-            size: {
-              value: 3,
-              random: { enable: true, minimumValue: 1 },
-            },
-            links: {
-              enable: false,
-            },
-            move: {
-              enable: true,
-              speed: 2,
-            },
-            life: {
-              duration: {
-                sync: false,
-                value: 3,
-              },
-              count: 0,
-              delay: {
-                random: {
-                  enable: true,
-                  minimumValue: 0.5,
-                },
-                value: 1,
-              },
-            },
+            number: { value: 200, density: { enable: true, value_area: 800 } },
+            color: { value: "#ffcc00" },
+            shape: { type: "circle" },
+            opacity: { value: 0.5, random: true },
+            size: { value: 3, random: { enable: true, minimumValue: 1 } },
+            links: { enable: false },
+            move: { enable: true, speed: 2 },
           },
           detectRetina: true,
         }}
         style={{
-          position: 'absolute',
+          position: "absolute",
           zIndex: -1,
           top: 0,
           left: 0,
@@ -149,50 +96,107 @@ const Register = () => {
         }}
       />
 
-      <Container className="mt-5" style={{position: 'relative', zIndex: "2 !important", color:"white !important"}}>
-      <Row>
-        <h1 className="text-center">
-          <AccountBalanceWalletIcon sx={{ fontSize: 40, color: "white"}}  className="text-center" />
-        </h1>
-        <h1 className="text-center text-white">Welcome to Expense Management System</h1>
-        <Col md={{ span: 6, offset: 3 }}>
-          <h2 className="text-white text-center mt-5" >Registration</h2>
-          <Form>
-            <Form.Group controlId="formBasicName" className="mt-3" >
-              <Form.Label className="text-white">Name</Form.Label>
-              <Form.Control type="text"  name="name" placeholder="Full name" value={values.name} onChange={handleChange} />
-            </Form.Group>
-            <Form.Group controlId="formBasicEmail" className="mt-3">
-              <Form.Label className="text-white">Email address</Form.Label>
-              <Form.Control type="email"  name="email" placeholder="Enter email" value={values.email} onChange={handleChange}/>
-            </Form.Group>
+      {/* Form Container */}
+      <Container
+        className="mt-5"
+        style={{
+          position: "relative",
+          zIndex: 2,
+          maxWidth: "500px",
+          backgroundColor: "rgba(0, 0, 0, 0.7)", // Add a subtle dark background to the form
+          borderRadius: "10px",
+          padding: "30px",
+        }}
+      >
+        <Row>
+          <Col>
+            <div className="text-center">
+              <h1 style={{ color: "#ffcc00" }}>
+                <AccountBalanceWalletIcon sx={{ fontSize: 50 }} />
+              </h1>
+              <h2 className="text-white mb-4">Register</h2>
+            </div>
 
-            <Form.Group controlId="formBasicPassword" className="mt-3">
-              <Form.Label className="text-white">Password</Form.Label>
-              <Form.Control type="password"  name="password" placeholder="Password" value={values.password} onChange={handleChange} />
-            </Form.Group>
-            <div style={{width: "100%", display: "flex" , alignItems:"center", justifyContent:"center", flexDirection: "column"}} className="mt-4">
-              <Link to="/forgotPassword" className="text-white lnk" >Forgot Password?</Link>
+            {/* Form */}
+            <Form onSubmit={handleSubmit}>
+              <Form.Group controlId="formBasicEmail" className="mb-3">
+                <Form.Label className="text-white">Email address</Form.Label>
+                <Form.Control
+                  type="email"
+                  placeholder="Enter email"
+                  name="email"
+                  onChange={handleChange}
+                  value={values.email}
+                  required
+                  style={{
+                    backgroundColor: "#333",
+                    color: "white",
+                    border: "1px solid #444",
+                  }}
+                />
+              </Form.Group>
 
-              <Button
+              <Form.Group controlId="formBasicPassword" className="mb-3">
+                <Form.Label className="text-white">Password</Form.Label>
+                <Form.Control
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  onChange={handleChange}
+                  value={values.password}
+                  required
+                  style={{
+                    backgroundColor: "#333",
+                    color: "white",
+                    border: "1px solid #444",
+                  }}
+                />
+              </Form.Group>
+
+              <Form.Group controlId="formConfirmPassword" className="mb-3">
+                <Form.Label className="text-white">Confirm Password</Form.Label>
+                <Form.Control
+                  type="password"
+                  name="confirmPassword"
+                  placeholder="Confirm Password"
+                  onChange={handleChange}
+                  value={values.confirmPassword}
+                  required
+                  style={{
+                    backgroundColor: "#333",
+                    color: "white",
+                    border: "1px solid #444",
+                  }}
+                />
+              </Form.Group>
+
+              {/* Buttons and Links */}
+              <div className="d-flex justify-content-center flex-column align-items-center">
+                <Button
                   type="submit"
-                  className=" text-center mt-3 btnStyle"
-                  onClick={!loading ? handleSubmit : null}
+                  className="btn btn-warning w-100"
                   disabled={loading}
+                  style={{ padding: "12px 0", fontSize: "16px", marginBottom: "15px" }}
                 >
-                  {loading ? "Registering..." : "Signup"}
+                  {loading ? "Registering..." : "Register"}
                 </Button>
 
-              <p className="mt-3" style={{color: "#9d9494"}}>Already have an account? <Link to="/login" className="text-white lnk" >Login</Link></p>
-            </div>
-          </Form>
-        </Col>
-      </Row>
-    <ToastContainer />
-    </Container>
-    </div>
-    </>
-  )
-}
+                <p className="text-white">
+                  Already have an account?{" "}
+                  <Link to="/login" className="text-warning">
+                    Login
+                  </Link>
+                </p>
+              </div>
+            </Form>
+          </Col>
+        </Row>
+      </Container>
 
-export default Register
+      {/* Toast Notifications */}
+      <ToastContainer />
+    </div>
+  );
+};
+
+export default Register;
