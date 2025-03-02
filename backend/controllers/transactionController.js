@@ -2,226 +2,231 @@ import Transaction from "../models/TransactionModel.js";
 import User from "../models/UserSchema.js";
 import moment from "moment";
 
+// Controller to add a transaction
 export const addTransactionController = async (req, res) => {
   try {
-    const {
-      title,
-      amount,
-      description,
-      date,
-      category,
-      userId,
-      transactionType,
-    } = req.body;
+    const { title, amount, description, date, category, userId, transactionType } = req.body;
 
-    // console.log(title, amount, description, date, category, userId, transactionType);
-
-    if (
-      !title ||
-      !amount ||
-      !description ||
-      !date ||
-      !category ||
-      !transactionType
-    ) {
-      return res.status(408).json({
+    if (!title || !amount || !description || !date || !category || !transactionType) {
+      return res.status(400).json({
         success: false,
-        messages: "Please Fill all fields",
+        message: "Please fill all fields",
       });
     }
 
     const user = await User.findById(userId);
-
     if (!user) {
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
 
     let newTransaction = await Transaction.create({
-      title: title,
-      amount: amount,
-      category: category,
-      description: description,
-      date: date,
+      title,
+      amount,
+      category,
+      description,
+      date,
       user: userId,
-      transactionType: transactionType,
+      transactionType,
     });
 
     user.transactions.push(newTransaction);
+    await user.save();
 
-    user.save();
-
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
-      message: "Transaction Added Successfully",
+      message: "Transaction added successfully",
+      transaction: newTransaction,
     });
   } catch (err) {
-    return res.status(401).json({
+    return res.status(500).json({
       success: false,
-      messages: err.message,
+      message: "Server error",
+      error: err.message,
     });
   }
 };
 
+// Controller to get all transactions for a user
 export const getAllTransactionController = async (req, res) => {
   try {
     const { userId, type, frequency, startDate, endDate } = req.body;
 
-    console.log(userId, type, frequency, startDate, endDate);
-
     const user = await User.findById(userId);
-
     if (!user) {
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
 
-    // Create a query object with the user and type conditions
-    const query = {
-      user: userId,
-    };
+    const query = { user: userId };
 
     if (type !== 'all') {
       query.transactionType = type;
     }
 
-    // Add date conditions based on 'frequency' and 'custom' range
     if (frequency !== 'custom') {
-      query.date = {
-        $gt: moment().subtract(Number(frequency), "days").toDate()
-      };
+      query.date = { $gt: moment().subtract(Number(frequency), "days").toDate() };
     } else if (startDate && endDate) {
-      query.date = {
-        $gte: moment(startDate).toDate(),
-        $lte: moment(endDate).toDate(),
-      };
+      query.date = { $gte: moment(startDate).toDate(), $lte: moment(endDate).toDate() };
     }
 
-    // console.log(query);
-
     const transactions = await Transaction.find(query);
-    //select * from transaction where date>18/02/2025
-    // console.log(transactions);
 
     return res.status(200).json({
       success: true,
-      transactions: transactions,
+      transactions,
     });
   } catch (err) {
-    return res.status(401).json({
+    return res.status(500).json({
       success: false,
-      messages: err.message,
+      message: "Server error",
+      error: err.message,
     });
   }
 };
 
+// Controller to get a single transaction by ID
+export const getSingleTransactionController = async (req, res) => {
+  try {
+    const transaction = await Transaction.findById(req.params.id);
 
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: "Transaction not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      transaction,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
+  }
+};
+
+// Controller to delete a single transaction
 export const deleteTransactionController = async (req, res) => {
   try {
-    const transactionId = req.params.id;
-    const userId = req.body.userId;
-
-    // console.log(transactionId, userId);
+    const { id } = req.params;
+    const { userId } = req.body;
 
     const user = await User.findById(userId);
-
     if (!user) {
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
-    const transactionElement = await Transaction.findByIdAndDelete(
-      transactionId
-    );
 
-    if (!transactionElement) {
-      return res.status(400).json({
+    const transaction = await Transaction.findByIdAndDelete(id);
+    if (!transaction) {
+      return res.status(404).json({
         success: false,
-        message: "transaction not found",
+        message: "Transaction not found",
       });
     }
 
-    const transactionArr = user.transactions.filter(
-      (transaction) => transaction._id === transactionId
+    user.transactions = user.transactions.filter(
+      (transactionId) => transactionId.toString() !== id
     );
-
-    user.transactions = transactionArr;
-
-    user.save();
-
-    // await transactionElement.remove();
+    await user.save();
 
     return res.status(200).json({
       success: true,
-      message: `Transaction successfully deleted`,
+      message: "Transaction successfully deleted",
     });
   } catch (err) {
-    return res.status(401).json({
+    return res.status(500).json({
       success: false,
-      messages: err.message,
+      message: "Server error",
+      error: err.message,
     });
   }
 };
 
-export const updateTransactionController = async (req, res) => {
+// Controller to delete multiple transactions
+export const deleteMultipleTransactionsController = async (req, res) => {
   try {
-    const transactionId = req.params.id;
+    const { transactionIds, userId } = req.body;
 
-    const { title, amount, description, date, category, transactionType } =
-      req.body;
-
-    console.log(title, amount, description, date, category, transactionType);
-
-    const transactionElement = await Transaction.findById(transactionId);
-
-    if (!transactionElement) {
+    if (!Array.isArray(transactionIds) || transactionIds.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "transaction not found",
+        message: "Provide an array of transaction IDs",
       });
     }
 
-    if (title) {
-      transactionElement.title = title;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
-    if (description) {
-      transactionElement.description = description;
-    }
+    const result = await Transaction.deleteMany({ _id: { $in: transactionIds } });
 
-    if (amount) {
-      transactionElement.amount = amount;
-    }
-
-    if (category) {
-      transactionElement.category = category;
-    }
-    if (transactionType) {
-      transactionElement.transactionType = transactionType;
-    }
-
-    if (date) {
-      transactionElement.date = date;
-    }
-
-    await transactionElement.save();
-
-    // await transactionElement.remove();
+    user.transactions = user.transactions.filter(
+      (transactionId) => !transactionIds.includes(transactionId.toString())
+    );
+    await user.save();
 
     return res.status(200).json({
       success: true,
-      message: `Transaction Updated Successfully`,
-      transaction: transactionElement,
+      message: `${result.deletedCount} transactions deleted successfully`,
     });
   } catch (err) {
-    return res.status(401).json({
+    return res.status(500).json({
       success: false,
-      messages: err.message,
+      message: "Server error",
+      error: err.message,
+    });
+  }
+};
+
+// Controller to update a transaction
+export const updateTransactionController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, amount, description, date, category, transactionType } = req.body;
+
+    const transaction = await Transaction.findById(id);
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: "Transaction not found",
+      });
+    }
+
+    if (title) transaction.title = title;
+    if (description) transaction.description = description;
+    if (amount) transaction.amount = amount;
+    if (category) transaction.category = category;
+    if (transactionType) transaction.transactionType = transactionType;
+    if (date) transaction.date = date;
+
+    await transaction.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Transaction updated successfully",
+      transaction,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message,
     });
   }
 };
